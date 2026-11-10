@@ -4,7 +4,7 @@ Candidate: Aryan Raj
 GitHub: https://github.com/aaryanraj1403-creator/IsoCode-Assignment  
 Public deployment: none verified. The URL below is local only.
 
-The public repository now contains the reviewed source at its root (commit 9024e46, branch main). An anonymous shallow clone on 10 November 2026 succeeded and returned 99 source/docs files; `.env`, `.local`, dependencies and build output were absent. The repository has one initial commit, so earlier local development history is not represented. The ZIP deliberately includes only this guide and the technical design PDF; it is not a source archive.
+The public repository now contains the reviewed source at its root on branch main. An anonymous shallow clone on 10 November 2026 succeeded and returned 99 source/docs files; `.env`, `.local`, dependencies and build output were absent. Git history begins with the submission commits, so earlier local development history is not represented. The ZIP deliberately includes only this guide and the technical design PDF; it is not a source archive.
 
 ## Prerequisites
 
@@ -193,4 +193,4 @@ Verification rerun on 10 November 2026 (IST): backend Maven test passed 32 tests
 
 The current source uses the production OpenAI Responses endpoint. On 10 November a direct model-metadata request succeeded, but a real Responses request and the in-app Suggest with AI call returned HTTP 429 credit_balance_exhausted. Successful live AI output remains unverified and requires available account credits/model access. No key is included here. The reviewer instance intentionally exercises manual fallback; the unavailable message is the expected current behavior without credits.
 
-There is no verified public application deployment. Production TLS, managed identity, multi-instance sessions/jobs, backups, retention/redaction, working-day schedules, item-level returns and courier slabs are not part of this take-home. Large XLSX and concurrent throughput remain unverified. The public source and an anonymous clone were verified; Git history begins with the initial submission commit, so earlier local development history is not represented.
+There is no verified public application deployment. Production TLS, managed identity, multi-instance sessions/jobs, backups, retention/redaction, working-day schedules, item-level returns and courier slabs are not part of this take-home. Large XLSX and concurrent throughput remain unverified. The public source and an anonymous clone were verified; Git history begins with the submission commits, so earlier local development history is not represented.

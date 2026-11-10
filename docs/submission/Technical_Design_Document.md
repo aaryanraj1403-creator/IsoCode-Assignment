@@ -12,7 +12,7 @@ A D2C finance team receives separate order, settlement, cash-on-delivery (COD), 
 
 The implemented journey is sign in → upload → preview and approve mapping → reconcile → inspect exceptions → create and review claims. Both finance executive and co-founder roles can operate this flow. Co-founders additionally manage rate versions and mapping rollback. Claims are local workflow records; no external partner submission occurs.
 
-Submission status: the public repository now contains the reviewed source at its root (commit 9024e46, branch main). An anonymous shallow clone on 10 November 2026 succeeded and returned 99 files; `.env`, `.local`, dependencies and build output were absent. The repository has a single initial commit, so earlier local development history is not represented.
+Submission status: the public repository now contains the reviewed source at its root on branch main. An anonymous shallow clone on 10 November 2026 succeeded and returned 99 files; `.env`, `.local`, dependencies and build output were absent. Git history begins with the submission commits, so earlier local development history is not represented.
 
 ## 2. Architecture and choices
 
