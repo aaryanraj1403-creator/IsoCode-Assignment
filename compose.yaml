@@ -1,0 +1,56 @@
+services:
+  database:
+    image: postgres:16-alpine
+    mem_limit: 512m
+    environment:
+      POSTGRES_DB: reconflow
+      POSTGRES_USER: reconflow
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD}
+      TZ: Asia/Kolkata
+    volumes: ["database:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reconflow -d reconflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  backend:
+    build: ./backend
+    mem_limit: 768m
+    environment:
+      DATABASE_URL: jdbc:postgresql://database:5432/reconflow?reWriteBatchedInserts=true
+      DATABASE_USER: reconflow
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD}
+      DEMO_FINANCE_PASSWORD: ${DEMO_FINANCE_PASSWORD:?Set DEMO_FINANCE_PASSWORD}
+      DEMO_FOUNDER_PASSWORD: ${DEMO_FOUNDER_PASSWORD:?Set DEMO_FOUNDER_PASSWORD}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      RETURN_GRACE_DAYS: ${RETURN_GRACE_DAYS:-14}
+      UPLOAD_DIR: /app/uploads
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--Xms64m -Xmx384m -XX:ActiveProcessorCount=2}
+    ports: ["127.0.0.1:${BACKEND_PORT:-8080}:8080"]
+    volumes: ["uploads:/app/uploads"]
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 10
+  frontend:
+    build: ./frontend
+    mem_limit: 128m
+    ports: ["127.0.0.1:${FRONTEND_PORT:-5173}:80"]
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+volumes:
+  database:
+  uploads:

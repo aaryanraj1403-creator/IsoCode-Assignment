@@ -1,0 +1,91 @@
+{
+  "date": "2026-11-04",
+  "backend": {
+    "source": "Maven Surefire XML; environment values omitted",
+    "jdk": "17.0.20.1",
+    "database": "PostgreSQL 16.15",
+    "suites": [
+      {
+        "name": "com.reconflow.AiMappingTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "1.361"
+      },
+      {
+        "name": "com.reconflow.AiMatchingTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.018"
+      },
+      {
+        "name": "com.reconflow.AiProviderHttpTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "1.353"
+      },
+      {
+        "name": "com.reconflow.FinancialRulesTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.049"
+      },
+      {
+        "name": "com.reconflow.ImportValidationTest",
+        "tests": "6",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "3.544"
+      },
+      {
+        "name": "com.reconflow.ReconciliationTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.405"
+      },
+      {
+        "name": "com.reconflow.WorkflowIntegrationTest",
+        "tests": "11",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "26.628"
+      }
+    ],
+    "totals": {
+      "tests": 31,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "frontend_build": {
+    "result": "PASS",
+    "modules": 38,
+    "javascript_kb": 184.82,
+    "javascript_gzip_kb": 57.44,
+    "css_kb": 7.02
+  },
+  "production_browser": {
+    "result": "PASS",
+    "tests": 3,
+    "total_seconds": 29.0,
+    "workflow_seconds": [
+      8.4,
+      2.7,
+      6.8
+    ],
+    "source": "Playwright terminal output and frontend/test-results/.last-run.json"
+  },
+  "live_ai_provider": "NOT VERIFIED: user has no API key; fixture transport and explicit unavailable fallback tested"
+}

@@ -1,0 +1,17 @@
+{
+  "url": "http://127.0.0.1:15173",
+  "health": {
+    "status": "UP"
+  },
+  "runtime": {
+    "postgresql": "16.15",
+    "logicalProcessors": 2,
+    "java": "17.0.21"
+  },
+  "original_samples_verified": 3,
+  "original_sample_risk": "1492.00",
+  "dashboard_risk_matches_exceptions": true,
+  "documentation_links_verified": 28,
+  "native_data_read_verified_orders": 400046,
+  "native_data_scan_note": "Earlier retained read-only scan; not repeated during final Docker handoff."
+}

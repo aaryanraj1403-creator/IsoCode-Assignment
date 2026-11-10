@@ -1,0 +1,41 @@
+{
+  "prefix": "DEMO-f36395ca",
+  "format": "XLSX",
+  "orders": 40,
+  "money_at_risk": "5992.00",
+  "statuses": [
+    "FREIGHT_OVERCHARGED",
+    "PENDING",
+    "RETURN_NOT_RECEIVED",
+    "SETTLED",
+    "SHORT_PAID",
+    "UNPAID_PAST_DUE"
+  ],
+  "reports": [
+    {
+      "type": "ORDERS",
+      "accepted": 40,
+      "errors": 3
+    },
+    {
+      "type": "SETTLEMENTS",
+      "accepted": 41,
+      "errors": 2
+    },
+    {
+      "type": "COD",
+      "accepted": 1,
+      "errors": 0
+    },
+    {
+      "type": "FREIGHT",
+      "accepted": 4,
+      "errors": 0
+    },
+    {
+      "type": "RETURNS",
+      "accepted": 2,
+      "errors": 0
+    }
+  ]
+}

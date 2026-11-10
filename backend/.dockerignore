@@ -1,0 +1,7 @@
+target/
+uploads/
+*.log
+.env
+.env.*
+*.pem
+*.key

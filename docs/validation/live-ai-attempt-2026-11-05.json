@@ -1,0 +1,38 @@
+{
+  "checked_at": "2026-11-05T10:45:04.242723+05:30",
+  "base_url": "http://127.0.0.1:15173",
+  "synthetic_data_only": true,
+  "checks": {
+    "backend_configured": true,
+    "live_mapping_available": false
+  },
+  "provider": "OpenAI",
+  "model": "gpt-6-luna",
+  "partner": "LIVE-AI-2916627f67",
+  "order_import_id": "23455f05-4abf-44bb-b3c3-39f2419875a8",
+  "mapping_seconds": 3.468,
+  "mapping_response": {
+    "message": "AI provider is unavailable or rejected the request. Continue manually.",
+    "suggestions": [],
+    "available": false
+  },
+  "status": "FAIL",
+  "failure_type": "AssertionError",
+  "failed_checks": [
+    "live_mapping_available"
+  ],
+  "manual_fallback_verification": {
+    "preview_valid": true,
+    "approved_import_complete": true,
+    "accepted": 1,
+    "errors": 0,
+    "reconciliation_status": "UNPAID_PAST_DUE",
+    "money_at_risk": "910.00"
+  },
+  "provider_diagnostic": {
+    "http_status": 429,
+    "error_code": "credit_balance_exhausted",
+    "error_type": "insufficient_quota",
+    "parameter": null
+  }
+}

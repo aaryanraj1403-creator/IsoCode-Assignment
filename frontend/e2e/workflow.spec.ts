@@ -1,0 +1,92 @@
+import {test,expect} from '@playwright/test';
+import {readFileSync,mkdirSync,existsSync} from 'node:fs';
+const env=Object.fromEntries((existsSync('../.env')?readFileSync('../.env','utf8'):'').split(/\r?\n/).filter(line=>line.includes('=')&&!line.startsWith('#')).map(line=>{const i=line.indexOf('=');return[line.slice(0,i),line.slice(i+1)]}));
+const password=(role:string)=>process.env['DEMO_'+role.toUpperCase()+'_PASSWORD']||env['DEMO_'+role.toUpperCase()+'_PASSWORD'];
+test('finance completes upload, mapping, reconciliation, claim evidence and logout',async({page,context})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');await page.getByLabel('Password',{exact:true}).fill(password('finance'));await page.getByRole('button',{name:'Sign in →',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Clarity in every settlement.'})).toBeVisible();
+ await expect(page.getByText('Money at risk',{exact:true}).first()).toBeVisible();
+ const cookie=(await context.cookies()).find(c=>c.name==='JSESSIONID');expect(cookie?.httpOnly).toBe(true);expect(cookie?.sameSite).toBe('Strict');
+ mkdirSync('../.local/qa',{recursive:true});await page.screenshot({path:'../.local/qa/dashboard-desktop.png',fullPage:true});
+ await page.getByRole('link',{name:'Import centre',exact:true}).click();
+ const prefix='E2E-'+Date.now();
+ await page.getByLabel('Report file').setInputFiles({name:prefix+'.csv',mimeType:'text/csv',buffer:Buffer.from('order_id,value,payment,delivery,order_date\n'+prefix+',1000,COD,DELIVERED,2026-01-01\n')});
+ await page.getByRole('button',{name:'Upload and review'}).click();
+ await expect(page.getByText('AWAITING MAPPING',{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Suggest with AI'}).click();
+ await expect(page.getByRole('status').filter({hasText:/AI is not configured/})).toBeVisible();
+ await page.getByRole('button',{name:'Validate 20-row preview'}).click();
+ await expect(page.getByRole('heading',{name:'Canonical preview (1 rows)'})).toBeVisible();
+ await page.getByRole('checkbox').check();await page.getByRole('button',{name:'Approve mapping and process'}).click();
+ await expect(page.getByText('COMPLETE',{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'View results'}).click();
+ await page.getByRole('row').filter({hasText:prefix}).getByRole('button',{name:'Inspect'}).click();
+ await expect(page.getByRole('heading',{name:prefix,exact:true})).toBeVisible();
+ await expect(page.getByText('₹910.00',{exact:true}).first()).toBeVisible();
+ await page.getByRole('button',{name:'Create claim',exact:true}).click();
+ await expect(page.getByRole('status').filter({hasText:/Claim #\d+ created/})).toBeVisible();
+ await page.getByRole('button',{name:/Open claim #/}).click();
+ await page.getByRole('combobox',{name:'Status',exact:true}).selectOption('IN_REVIEW');await page.getByRole('textbox',{name:'Note',exact:true}).fill('Browser-tested synthetic evidence review.');
+ await page.getByRole('button',{name:'Save update'}).click();await expect(page.getByText('IN REVIEW',{exact:true})).toBeVisible();
+ const downloadPromise=page.waitForEvent('download');await page.getByRole('link',{name:'Export evidence JSON'}).click();const download=await downloadPromise;expect(download.suggestedFilename()).toMatch(/claim-\d+-evidence.json/);
+ await page.screenshot({path:'../.local/qa/claim-desktop.png',fullPage:true});
+ await page.getByRole('button',{name:'Sign out',exact:true}).click();await expect(page.getByRole('button',{name:'Sign in →',exact:true})).toBeVisible();expect(errors).toEqual([]);
+});
+test('co-founder can add a rate version and navigate on mobile',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.goto('/');
+ await page.getByLabel('Demo account').selectOption('founder');await page.getByLabel('Password',{exact:true}).fill(password('founder'));await page.getByRole('button',{name:'Sign in →',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Clarity in every settlement.'})).toBeVisible();
+ await page.getByRole('link',{name:'Rate cards',exact:true}).click();await expect(page.getByRole('heading',{name:'Make the rules explicit.'})).toBeVisible();
+ const partner='E2E-RATE-'+Date.now();await page.getByLabel('Partner',{exact:true}).fill(partner);
+ await page.getByRole('button',{name:'Save rate version'}).click();await expect(page.getByRole('status').filter({hasText:'Rate version saved'})).toBeVisible();
+ await expect(page.getByRole('cell').filter({hasText:partner})).toBeVisible();
+ await page.getByRole('link',{name:'Overview',exact:true}).click();await expect(page.getByRole('heading',{name:'Clarity in every settlement.'})).toBeVisible();
+ await expect(page.getByText('Money at risk',{exact:true}).first()).toBeVisible();
+ await page.screenshot({path:'../.local/qa/dashboard-mobile.png',fullPage:true});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+});
+
+test('filters and unmatched manual approval work through the production API',async({page})=>{
+ await page.goto('/');await page.getByLabel('Password',{exact:true}).fill(password('finance'));await page.getByRole('button',{name:'Sign in →',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Clarity in every settlement.'})).toBeVisible();
+ const prefix='E2E-MATCH-'+Date.now();
+ const endpoint=(path:string)=>new URL('/api'+path,page.url()).href;
+ async function securePost(path:string,options:any){
+  const csrf=await(await page.request.get(endpoint('/auth/csrf'))).json();
+  const response=await page.request.post(endpoint(path),{...options,headers:{...(options.headers??{}),[csrf.headerName]:csrf.token}});
+  expect(response.ok(),await response.text()).toBe(true);return response;
+ }
+ async function report(type:string,csv:string){
+  const uploaded=await(await securePost('/imports',{multipart:{partner:'Website',type,file:{name:prefix+'-'+type+'.csv',mimeType:'text/csv',buffer:Buffer.from(csv)}}})).json();
+  await expect.poll(async()=> (await(await page.request.get(endpoint('/imports/'+uploaded.id))).json()).state).toBe('AWAITING_MAPPING');
+  const mapping=Object.fromEntries(csv.split('\n')[0].split(',').map(f=>[f,f]));
+  await securePost('/imports/'+uploaded.id+'/preview',{data:{mapping}});
+  await securePost('/imports/'+uploaded.id+'/approve',{data:{mapping,approve:true}});
+  await expect.poll(async()=> (await(await page.request.get(endpoint('/imports/'+uploaded.id))).json()).state).toBe('COMPLETE');
+ }
+ await report('ORDERS','order_id,value,payment,delivery,order_date\n'+prefix+',1000,COD,DELIVERED,2026-01-01\n');
+ await report('COD','transaction_id,order_id,amount,date\n'+prefix+'-TX,,910,2026-01-08\n');
+ const order=(await(await page.request.get(endpoint('/orders?q='+prefix))).json()).rows[0];
+ await page.getByRole('combobox',{name:'Overview partner'}).selectOption('Website');
+ await expect(page.getByRole('cell',{name:'Marketplace 1',exact:true})).toHaveCount(0);
+ await page.getByRole('link',{name:'Import centre',exact:true}).click();
+ await page.getByLabel('Search imports').fill(prefix);await page.getByRole('combobox',{name:'History report type',exact:true}).selectOption('COD');await page.getByRole('combobox',{name:'Import state',exact:true}).selectOption('COMPLETE');
+ await expect(page.getByRole('row').filter({hasText:prefix})).toHaveCount(1);
+ await page.getByRole('link',{name:'Reconciliation',exact:true}).click();await page.getByRole('button',{name:'Review unmatched records'}).click();
+ await page.getByLabel('Search unmatched').fill(prefix);
+ const row=page.getByRole('row').filter({hasText:prefix+'-TX'});
+ await expect(row).toHaveCount(1);await row.getByRole('button',{name:'Suggest match with AI'}).click();
+ await expect(page.getByRole('status').filter({hasText:'AI is not configured'})).toBeVisible();
+ await page.getByLabel('Find an order for Website').fill(prefix);
+ await page.getByRole('combobox',{name:'Target order',exact:true}).selectOption(String(order.id));
+ const before=await(await page.request.get(endpoint('/unmatched?q='+prefix))).json();expect(before.total).toBe(1);
+ await page.getByRole('button',{name:'Approve manual match',exact:true}).click();
+ await expect(page.getByRole('status').filter({hasText:'Match explicitly approved'})).toBeVisible();
+ await expect(row).toHaveCount(0);
+ const after=await(await page.request.get(endpoint('/orders?q='+prefix))).json();expect(after.rows[0].status).toBe('SETTLED');expect(Number(after.rows[0].received)).toBe(910);
+ await page.getByRole('button',{name:'Show orders',exact:true}).click();await page.getByLabel('Search',{exact:true}).fill(prefix);
+ await expect(page.getByRole('row').filter({hasText:prefix}).getByText('SETTLED',{exact:true})).toBeVisible();
+ await page.getByRole('link',{name:'Claims',exact:true}).click();await page.getByLabel('Search claims').fill('no-such-'+prefix);
+ await expect(page.getByText('No records to show.',{exact:true})).toBeVisible();
+});

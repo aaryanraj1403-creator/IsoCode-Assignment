@@ -1,0 +1,54 @@
+{
+  "environment": {
+    "os": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.2",
+    "cpu": "AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",
+    "logical_processors": 12,
+    "runtime": {
+      "postgresql": "16.15",
+      "logicalProcessors": 2,
+      "java": "17.0.21"
+    }
+  },
+  "records_before": 100048,
+  "orders": 50000,
+  "total_report_rows": 100000,
+  "end_to_end_seconds": 25.952,
+  "under_one_minute": true,
+  "includes": [
+    "HTTP multipart upload",
+    "SHA-256",
+    "streaming parsing",
+    "raw row storage",
+    "20-row preview",
+    "mapping approval",
+    "row validation",
+    "database normalisation",
+    "reconciliation after both files",
+    "HTTP polling"
+  ],
+  "excludes": [
+    "dataset generation",
+    "human think time",
+    "dependency installation",
+    "cold JVM startup"
+  ],
+  "reports": [
+    {
+      "type": "ORDERS",
+      "import_id": "cfffa234-6114-4451-b43d-af037edfdd88",
+      "rows": 50000,
+      "accepted": 50000,
+      "errors": 0,
+      "seconds": 13.692
+    },
+    {
+      "type": "SETTLEMENTS",
+      "import_id": "e79008cf-c4bd-4ea1-885a-a16c9292b799",
+      "rows": 50000,
+      "accepted": 50000,
+      "errors": 0,
+      "seconds": 12.26
+    }
+  ]
+}

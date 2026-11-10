@@ -1,0 +1,4 @@
+order_id,channel,value,payment,delivery_status,expected,received
+ORD-W-204118,Website,1499,COD,Delivered,1409,0
+ORD-M-88120,Marketplace 1,1199,Prepaid,Delivered,899,862
+ORD-W-204377,Website,2398,Prepaid,Returned to warehouse,-96,-142

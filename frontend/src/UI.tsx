@@ -1,0 +1,8 @@
+import React from 'react';
+import {label} from './api';
+export function Notice({error,message}:{error?:string;message?:string}){return <>{error&&<div className="notice error" role="alert">{error}</div>}{message&&<div className="notice" role="status">{message}</div>}</>}
+export function State({loading,error,refresh}:{loading:boolean;error:string;refresh:()=>void}){return <>{loading&&<p className="muted" role="status">Loading workspace data…</p>}{error&&<div className="notice error" role="alert">{error} <button className="secondary" onClick={refresh}>Try again</button></div>}</>}
+export function Badge({value}:{value:unknown}){const good=['SETTLED','COMPLETE','RESOLVED'].includes(String(value));return <span className={'badge '+(good?'good':'')}>{label(value)}</span>}
+export function Pager({page,total,size=25,onPage}:{page:number;total:number;size?:number;onPage:(page:number)=>void}){return <div className="pager"><span>{total.toLocaleString('en-IN')} records · Page {page+1} of {Math.max(1,Math.ceil(total/size))}</span><button className="secondary" disabled={page===0} onClick={()=>onPage(page-1)}>Previous</button><button className="secondary" disabled={(page+1)*size>=total} onClick={()=>onPage(page+1)}>Next</button></div>}
+export function Table({heads,children,empty=false}:{heads:string[];children:React.ReactNode;empty?:boolean}){return <div className="tablewrap"><table><thead><tr>{heads.map((h,i)=><th key={i} scope="col">{h}</th>)}</tr></thead><tbody>{children}</tbody></table>{empty&&<p className="empty">No records to show.</p>}</div>}
+export function Title({eyebrow,title,children}:{eyebrow:string;title:string;children?:React.ReactNode}){return <div className="title"><p className="eyebrow">{eyebrow}</p><h1>{title}</h1>{children}</div>}

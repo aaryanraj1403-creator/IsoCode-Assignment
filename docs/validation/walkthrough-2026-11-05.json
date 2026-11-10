@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-05",
+  "recording_passed": true,
+  "duration_seconds": 208.4,
+  "resolution": [
+    1440,
+    1000
+  ],
+  "chapters": 23,
+  "audio": false,
+  "hinglish_captions": true,
+  "page_errors": [],
+  "provider_calls": 0,
+  "synthetic_partner": "Walkthrough 2026-11-05-37b46d",
+  "verified": {
+    "orders_accepted": 3,
+    "invalid_orders_rejected": 1,
+    "settlement_transactions_accepted": 4,
+    "duplicate_transactions_rejected": 1,
+    "money_at_risk": "37.00",
+    "claim_status": "IN_REVIEW",
+    "claim_evidence_downloaded": true,
+    "playback_and_chapter_controls": true,
+    "play_pause_speed_controls": true,
+    "frames_visually_inspected": true,
+    "archive_integrity": true
+  },
+  "local_player": ".local\\walkthrough\\2026-11-05-37b46d\\WATCH.html",
+  "local_archive": ".local\\walkthrough\\Reconflow-Hinglish-Walkthrough-2026-11-05.zip",
+  "archive_bytes": 22791720,
+  "notes": "Final recording passed after correcting a recorder form selector and allowing injected caption styling only in the recording browser. Server CSP and application source were unchanged. Prior failed synthetic dataset was retained."
+}
