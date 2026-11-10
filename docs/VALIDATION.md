@@ -2,6 +2,10 @@
 
 Updated: **5 November 2026**, Asia/Kolkata. Full regression/build/performance results below are from 4 November; the live-provider attempt and manual fallback check are from 5 November.
 
+## Current verification addendum — 10 November 2026
+
+A current-source rerun produced 32 backend tests with 0 failures/errors/skips, including 11 PostgreSQL 16.15 integration tests, in 24.588 seconds with Java 17.0.21. The frontend production build passed with 38 modules (JavaScript 184.82 kB / 57.44 kB gzip; CSS 7.02 kB). The isolated reviewer Docker stack rebuilt and reached healthy state at http://127.0.0.1:16173, and all three Playwright workflows passed on a clean stack. The XLSX loader scenario produced 40 orders, five deliberate row errors, six statuses and INR 5,992 risk across five report types. A fresh 100,000-total-row Docker benchmark took 22.443 seconds (13.497 + 8.946). A live OpenAI retry still returned HTTP 429 `credit_balance_exhausted`; the application returned the unavailable message and manual mapping remained usable. The detailed current summary is in `docs/submission/Technical_Design_Document.md`.
+
 ## Live provider attempt — 5 November
 
 The user configured a private API key and `gpt-6-luna`. The existing Docker backend was recreated with those environment values and all three services became healthy. Authenticated `/api/ai/status` confirmed configuration. A real mapping request through the application returned unavailable after 3.468 seconds, with no fabricated suggestions. A minimal diagnostic request to the fixed official Responses endpoint returned HTTP **429**, code **credit_balance_exhausted**, type **insufficient_quota**. No API key or raw authorization/error content was recorded.

@@ -1,95 +1,114 @@
-# Setup and deployment
+# Reconflow - reviewer setup and deployment
 
-The verified hand-back environment is currently the Docker project `reconflow-validation` at **http://127.0.0.1:15173**, with backend port 18080. Its database/upload volumes contain the functional demo and browser-test evidence. The native benchmark database is preserved but stopped. Use one runtime at a time on this workstation; the measured Windows memory/page-file budget could not reliably support the native large-data restart alongside Docker Desktop.
+Candidate: Aryan Raj  
+GitHub: https://github.com/aaryanraj1403-creator/IsoCode-Assignment  
+Public deployment: none verified. The URL below is local only.
+
+The public repository now contains the reviewed source at its root (commit 9024e46, branch main). An anonymous shallow clone on 10 November 2026 succeeded and returned 99 source/docs files; `.env`, `.local`, dependencies and build output were absent. The repository has one initial commit, so earlier local development history is not represented. The ZIP deliberately includes only this guide and the technical design PDF; it is not a source archive.
 
 ## Prerequisites
 
-- Docker Desktop with the Linux engine and Docker Compose for the container route.
-- For native development: Java **17 JDK**, Maven 3.9+, Node.js 20+ / npm and PostgreSQL 16+.
-- Python 3.10+ for the standard-library dataset generator, demo loader and benchmark.
-- Chrome/Edge installed, or a Playwright Chromium installation, for browser tests.
+- Docker Desktop running Linux containers and Docker Compose v2 or later.
+- Windows PowerShell for the supplied isolated-reviewer setup script.
+- Native alternative: Java 17 JDK, Maven 3.9+, Node.js 20+ with npm, PostgreSQL 16+.
+- Python 3.10+ for the synthetic generator, HTTP loader and benchmark (standard library).
+- Chrome/Edge or Playwright Chromium for browser tests.
+- Internet for first-time images and dependencies. Use one application runtime at a time on a small-memory workstation.
 
-The repository contains no production credentials. Keep the root `.env` private; it is ignored. If it already exists, preserve its values. Otherwise copy `.env.example` and set the three passwords. Demo passwords must contain at least 12 characters.
+## Obtain source and locate the root
+
+After the candidate publishes the reviewed source:
+
+```powershell
+git clone https://github.com/aaryanraj1403-creator/IsoCode-Assignment.git
+cd IsoCode-Assignment
+```
+
+The repository root itself contains `backend`, `frontend`, `compose.yaml`, `scripts` and the sample data, so the clone directory is the project root. Run all remaining root commands inside `IsoCode-Assignment`.
+
+## Recommended: isolated synthetic reviewer application
+
+From the project root:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/setup-reviewer.ps1
+docker compose --env-file .local/reviewer.env -p reconflow-reviewer config --quiet
+docker compose --env-file .local/reviewer.env -p reconflow-reviewer up -d --build --wait --wait-timeout 180
+docker compose --env-file .local/reviewer.env -p reconflow-reviewer ps
+```
+
+Open **http://127.0.0.1:16173**. Backend health: **http://127.0.0.1:19080/api/health**. Do not mix `localhost` and `127.0.0.1` in a session.
+
+The setup script creates `.local/reviewer.env` with a private randomly generated database password. It preserves an existing reviewer file and never overwrites root `.env`. The project uses independent database/upload volumes. PostgreSQL has no exposed host port. Backend/nginx bind only to loopback. AI credentials are blank by default.
+
+Intentionally public logins, for this isolated synthetic reviewer setup only:
+
+| Role | Username | Password |
+| --- | --- | --- |
+| Finance executive | finance | Review-Finance-2026! |
+| Co-founder | founder | Review-Founder-2026! |
+
+Startup provisions both accounts with BCrypt hashes. If an existing reviewer environment was customized, its configured values apply instead. Never use these public credentials for real data or a public deployment. They are application demo accounts, not database or infrastructure credentials.
+
+Stop without deleting evidence:
+
+```powershell
+docker compose --env-file .local/reviewer.env -p reconflow-reviewer stop
+```
+
+Do not use `down -v` when preserving reports and claims. Ports can be changed when first creating the reviewer file using `-FrontendPort` and `-BackendPort` on the setup script; on an existing file edit those two entries privately.
 
 ## Environment variables
 
-| Variable | Purpose |
+| Name | Purpose |
 | --- | --- |
-| DATABASE_PASSWORD | PostgreSQL password; required. |
-| DATABASE_URL | Native JDBC connection URL. Default: localhost:5432/reconflow. Compose supplies its internal database URL. Use `reWriteBatchedInserts=true` for efficient batch inserts. |
-| DATABASE_USER | Native database user; defaults to reconflow. |
-| DEMO_FINANCE_PASSWORD | Environment-supplied password for username finance. Hashed with BCrypt in the database. |
-| DEMO_FOUNDER_PASSWORD | Environment-supplied password for username founder. Hashed with BCrypt in the database. |
-| OPENAI_API_KEY | Optional backend-only provider key. |
-| OPENAI_MODEL | Optional Responses/structured-output model available to your account. Both key and model are needed for AI suggestions. |
-| RETURN_GRACE_DAYS | Default 14; integer 1–365. Expected warehouse return deadline is order date plus this value unless an explicit return_due is supplied. |
-| SESSION_COOKIE_SECURE | false for local HTTP; true when serving the application through HTTPS. |
-| JAVA_TOOL_OPTIONS | Optional JVM override. Native startup defaults to a 512 MB heap; Compose defaults to a 384 MB heap. |
-| UPLOAD_DIR | Source-file storage directory. Native default: backend/uploads. Compose uses /app/uploads on a persistent volume. |
-| FRONTEND_PORT | Compose host port; defaults to 5173. |
-| BACKEND_PORT | Compose host port; defaults to 8080. |
-| TEST_DATABASE_URL | Dedicated PostgreSQL database for integration tests; use a database such as reconflow_test. |
-| TEST_DATABASE_USER | Integration-test user; defaults to reconflow. |
-| TEST_DATABASE_PASSWORD | Password for the dedicated integration-test database. |
-| BASE_URL | Optional Playwright base URL; defaults to http://127.0.0.1:5173. |
-| PLAYWRIGHT_EXECUTABLE_PATH | Optional browser executable override for Playwright. |
+| DATABASE_PASSWORD | Required private database credential. Reviewer script generates it locally. |
+| DATABASE_USER | Native PostgreSQL user; default reconflow. Compose uses reconflow. |
+| DATABASE_URL | Native JDBC URL; Compose supplies its internal database URL with reWriteBatchedInserts=true. |
+| DEMO_FINANCE_PASSWORD | Backend password for finance; at least 12 characters. |
+| DEMO_FOUNDER_PASSWORD | Backend password for founder; at least 12 characters. |
+| OPENAI_API_KEY | Optional backend-only OpenAI key; never put in frontend variables. |
+| OPENAI_MODEL | Account-accessible Responses/structured-output model; needed with the key. |
+| RETURN_GRACE_DAYS | Missing-return grace period; default 14, range 1..365. |
+| SESSION_COOKIE_SECURE | false for local HTTP; true behind HTTPS. |
+| UPLOAD_DIR | Persistent originals; Compose /app/uploads, native ./uploads relative to backend. |
+| JAVA_TOOL_OPTIONS | Optional JVM bounds; Compose defaults to 384 MB heap and two active processors. |
+| FRONTEND_PORT / BACKEND_PORT | Host ports; reviewer setup uses 16173 / 19080. |
+| TEST_DATABASE_URL | Dedicated PostgreSQL integration-test JDBC URL. Never use the application database. |
+| TEST_DATABASE_USER / TEST_DATABASE_PASSWORD | Dedicated test database credentials. |
+| BASE_URL | Browser/HTTP test origin. |
+| PLAYWRIGHT_EXECUTABLE_PATH | Optional local Chrome/Edge/Chromium executable override. |
 
-The Windows scripts and Python clients read simple `NAME=value` lines from root `.env`. Use bare values without shell quotes or interpolation. They do not echo passwords. Compose reads the same file.
+Do not print environment files or add secrets to Git. Files use simple `NAME=value` entries. Compose reads the selected env file; Python and native scripts read root `.env`, with process variables used by the Python clients taking precedence.
 
-## Docker Compose
+## Migrations and synthetic seeds
 
-With the Linux engine running:
+Flyway runs V1-V4 automatically on backend startup. `spring.sql.init.mode=never` prevents legacy schema.sql from running alongside migrations. V1 preserves the brief's three example orders and creates illustrative channel/courier rate cards. No manual SQL seed command is required.
 
-```powershell
-docker compose config --quiet
-docker compose up --build --wait
-docker compose ps
-```
-
-Open http://127.0.0.1:5173. The frontend nginx server proxies API requests to the backend; the database is not exposed on a host port. The backend is also available at http://127.0.0.1:8080/api/health.
-
-The database and uploads use separate persistent volumes. Migrations run automatically before authentication is initialized. A non-root Java 17 runtime serves the backend. The frontend image builds the TypeScript production bundle.
-
-Compose limits the backend to 768 MB, PostgreSQL to 512 MB and nginx to 128 MB. The backend heap is 384 MB. Native startup uses a 512 MB heap, and test JVMs use 384 MB; Maven startup uses a 256 MB heap. These bounds keep verification practical on the measured machine with approximately 7.3 GiB usable RAM. Run large benchmarks separately from builds/browser tests; other running applications still affect available memory and timing.
-
-A reproducible Windows startup check is supplied:
+For CSV/XLSX scenarios covering duplicates, splits, invalid rows, COD, freight, taxes and returns:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/check-compose.ps1
+$env:DEMO_FINANCE_PASSWORD='Review-Finance-2026!'
+python scripts/load-demo.py --base http://127.0.0.1:16173 --xlsx
 ```
 
-If native development already uses 5173/8080, validate an independent Compose project on alternate ports:
+This generates uniquely prefixed synthetic data and imports all five report types through preview/approval. It expects 40 orders, five deliberate row errors, six states and INR 5,992 risk for that prefix. Repeated runs retain earlier records. For manual UI uploads use `sample-data/synthetic`, partner Website. `sample-data/orders.csv` is the preserved brief reference and lacks the required dates for the current upload contract.
+
+## Native development alternative
+
+Use a PostgreSQL installation and privately configure root `.env` from `.env.example`; preserve an existing file. Set DATABASE_URL, DATABASE_USER, DATABASE_PASSWORD and both application passwords. Example non-secret URL: `jdbc:postgresql://127.0.0.1:5432/reconflow?reWriteBatchedInserts=true`. Create the database using your own authorized local administrator and password prompt:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/check-compose.ps1 -ProjectName reconflow-validation -FrontendPort 15173 -BackendPort 18080
+createdb -h 127.0.0.1 -U postgres -W reconflow
 ```
 
-The separate project has its own database and upload volumes. Stopping a project with `docker compose --project-name NAME stop` retains data. Do not remove volumes when you want to preserve reports and claims.
-
-## Native Windows development
-
-Configure an existing PostgreSQL database with `DATABASE_URL`, `DATABASE_USER` and `DATABASE_PASSWORD`, or use portable PostgreSQL:
+Set DATABASE_USER to the database role you actually provisioned; this command alone does not create a reconflow role. With Java 17 and Maven on PATH, from the root:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/start-database.ps1 -PostgresBin "C:\tools\pgsql\bin"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/start-backend.ps1
 ```
 
-This script initializes only the project’s `.local/postgres` cluster if missing, authenticates with SCRAM and listens on 127.0.0.1:55432. It never modifies the installed PostgreSQL service. For this route, root `.env` should contain:
-
-```text
-DATABASE_URL=jdbc:postgresql://127.0.0.1:55432/reconflow?reWriteBatchedInserts=true
-DATABASE_USER=reconflow
-```
-
-Run the backend:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/start-backend.ps1 -MavenPath "C:\tools\apache-maven\bin\mvn.cmd" -JavaHome "C:\tools\jdk-17"
-```
-
-The script also discovers portable Maven/PostgreSQL archives extracted in Downloads and a JDK under `.local/jdk17`. Explicit arguments are more portable. It loads `.env`, builds/tests the backend and copies the executable JAR to `.local/runtime` before running it. This permits later builds without Windows locking `target`. `-NoBuild` runs an existing packaged JAR.
-
-In a separate terminal:
+The script loads root `.env`, builds/packages the backend and runs a copied JAR. In a second terminal:
 
 ```powershell
 cd frontend
@@ -97,95 +116,81 @@ npm ci
 npm run dev -- --host 127.0.0.1
 ```
 
-Use the Vite origin for the entire application. Session cookies are same-origin; do not mix localhost and 127.0.0.1 during one login flow. Ctrl+C stops the foreground Java or Vite process. To stop the portable database cleanly:
+Open http://127.0.0.1:5173; Vite proxies /api to backend port 8080. Use Ctrl+C to stop foreground processes. Native accounts use your root environment values, not necessarily the public reviewer passwords.
+
+## Build and tests
+
+Frontend, from its directory:
 
 ```powershell
-& "C:\tools\pgsql\bin\pg_ctl.exe" -D ".local/postgres" -m fast -w stop
-```
-
-## Demo login and operation
-
-Choose Finance executive (`finance`) or Co-founder (`founder`) and enter the corresponding environment password. The backend provisions these two users after migrations, stores BCrypt hashes and refreshes the hashes from the configured environment at startup. Passwords are not stored in frontend code.
-
-Both roles can upload, preview/approve mappings, reconcile, approve manual matches and manage claims. Only the co-founder can add rate-card versions and restore mapping versions. Sign-out invalidates the session and removes its cookie. Sessions expire after 30 minutes of inactivity.
-
-Use the files in `sample-data/synthetic` with partner Website. The older `sample-data/orders.csv` preserves the original brief; it lacks the dates required by the current import format. It is reference evidence rather than a ready-to-import order report.
-
-For an API-driven scenario check:
-
-```powershell
-python scripts/load-demo.py --xlsx
-```
-
-The loader creates uniquely prefixed synthetic records. It expects 40 valid orders, five intentional rejected rows across the order/settlement files, and ₹5,992 total risk for that prefix. It does not delete prior runs.
-
-## Backend verification
-
-Run unit/parser/AI validation tests and package:
-
-```powershell
-cd backend
-mvn package
-```
-
-Integration tests are skipped unless `TEST_DATABASE_URL` is present. Create a separate database first using your PostgreSQL tooling:
-
-```powershell
-createdb -h 127.0.0.1 -p 55432 -U reconflow reconflow_test
-```
-
-From the project root, load local configuration into this PowerShell process and run the full suite:
-
-```powershell
-. ./scripts/env.ps1
-Import-ReconflowEnvironment (Get-Location).Path
-$env:TEST_DATABASE_URL='jdbc:postgresql://127.0.0.1:55432/reconflow_test'
-$env:TEST_DATABASE_PASSWORD=$env:DATABASE_PASSWORD
-cd backend
-mvn package
-```
-
-Use Java 17 via process-local `JAVA_HOME`/PATH or your IDE JDK. The test database receives synthetic records and demo test users; never point it at a real/reviewer database. Test cases use distinct partner IDs and retain evidence, so repeated runs do not delete another test run’s records. The integration suite overrides AI credentials to keep tests offline.
-
-## Browser and performance verification
-
-With the app running:
-
-```powershell
-cd frontend
+npm ci
 npm run build
+$env:BASE_URL='http://127.0.0.1:16173'
+$env:DEMO_FINANCE_PASSWORD='Review-Finance-2026!'
+$env:DEMO_FOUNDER_PASSWORD='Review-Founder-2026!'
 npm run test:e2e
 ```
 
-Playwright discovers installed Windows Chrome/Edge. On other systems install a supported browser with `npx playwright install chromium`, or set `PLAYWRIGHT_EXECUTABLE_PATH`. The tests read local demo passwords from `.env` or the environment and add synthetic reports, claims and rate cards. Traces/reports are ignored; review their contents before sharing because browser traces can contain session data.
+The browser configuration uses installed Chrome/Edge if present. Otherwise run `npx playwright install chromium` before tests. Tests create uniquely named synthetic reports/claims and preserve them. Run them against a freshly started reviewer stack; repeated interrupted runs can leave extra AWAITING MAPPING rows, so reset the isolated reviewer volumes before a clean assertion run.
 
-The reproducible benchmark runs through HTTP against the same database-backed flow:
+Backend unit/parser/provider tests, from backend: `mvn test`. Without TEST_DATABASE_URL, 21 tests run and the 11 database integration tests are skipped; this is not a full integration pass.
 
-```powershell
-python scripts/benchmark.py --rows 50000 --out .local/benchmark-100k-total.json
-python scripts/benchmark.py --rows 100000 --out .local/benchmark-200k-total.json
-```
-
-`--rows` specifies rows per file: 50,000 produces 100,000 total input rows; 100,000 produces a 200,000-row stress run. Timing starts before upload and ends after both imports finish reconciliation. Parsing, source storage, 20-row previews, approval requests, validation, database writes and HTTP polling are included. Generation, human review delay and cold JVM startup are excluded. All generated benchmark orders must be SETTLED. The JSON report includes actual Java/PostgreSQL versions and the count of pre-existing orders.
-
-Run performance checks without concurrent browser tests or imports. Each run retains another synthetic dataset. Results depend on hardware, database growth, filesystem and concurrent services; the latest measured limits are in `docs/VALIDATION.md`.
-
-## AI, HTTPS and persistence
-
-AI remains optional. Configure both backend variables, restart the backend, and click Suggest with AI during mapping review or Suggest match with AI in unmatched records. Mapping uses headers only; record matching uses opaque/redacted comparison facts. Proposals remain unapplied until explicit account-bound approval, and expire after 24 hours. Real provider success requires network access, a valid key, account/model access and provider capacity. Provider errors never silently fall back to fabricated AI output.
-
-After changing `.env`, recreate the backend with `docker compose up -d backend`; a plain container restart does not load changed Compose environment values. For the existing validation project, keep `FRONTEND_PORT=15173` and `BACKEND_PORT=18080` in the current shell and use `docker compose -p reconflow-validation up -d backend`.
-
-An opt-in live check uses synthetic data and normally makes two provider requests, which can incur API charges:
+The full suite was verified on 10 November 2026 with Java 17.0.21 and Maven 3.9.16 against a disposable PostgreSQL 16 container:
 
 ```powershell
-python scripts/verify-live-ai.py --base http://127.0.0.1:15173 --out .local/live-ai-verification.json
+$testDbPassword=[guid]::NewGuid().ToString('N')
+docker run -d --rm --name reconflow-testdb -e POSTGRES_DB=reconflow_test -e POSTGRES_USER=reconflow_test -e POSTGRES_PASSWORD=$testDbPassword -p 127.0.0.1:55433:5432 postgres:16-alpine
+for($i=0;$i -lt 30;$i++){if((docker exec reconflow-testdb pg_isready -U reconflow_test -d reconflow_test 2>$null) -match 'accepting'){break};Start-Sleep 1}
+# Use JDK 17 on PATH, or set JAVA_HOME to your JDK 17 installation.
+$env:TEST_DATABASE_URL='jdbc:postgresql://127.0.0.1:55433/reconflow_test'
+$env:TEST_DATABASE_USER='reconflow_test'
+$env:TEST_DATABASE_PASSWORD=$testDbPassword
+cd backend
+mvn -B test
 ```
 
-It checks real mapping output, preview/approval, a missing-ID receipt, a provider match proposal and explicit match approval before settlement. It retains its synthetic data and saves a result without credentials. It stops on failure and does not retry billing errors. The 5 November run was blocked by `credit_balance_exhausted`; restore API credits in the account's billing settings before repeating it. The existing three browser regression workflows were validated with AI unconfigured and assert that fallback; this live script is a separate opt-in provider check.
+Expected result: 32 tests, 0 failures, 0 errors, 0 skips, including 11 real PostgreSQL integration tests. Remove only the disposable container when finished: `docker rm -f reconflow-testdb`.
 
-For HTTPS deployment, use a trusted TLS reverse proxy and `SESSION_COOKIE_SECURE=true`. Keep UI and API on the same origin. Do not set Secure cookies for local HTTP. CSRF remains enabled for login, logout and all mutations. The production nginx configuration supplies a same-origin content policy and attachment downloads use explicit filenames.
+Alternative fully Docker route (not rerun in the dated check), if Java/Maven are not installed: create `reconflow_test` inside the reviewer database, then run the backend source through Maven in a container on the reviewer network:
 
-Back up PostgreSQL and the source-file volume together; database rows reference stored files. In-memory sessions are lost at restart. Current-day reconciliation snapshots are retained at startup; missing or stale results trigger refresh. Parsing/processing imports interrupted by restart are marked FAILED and can be retried from retained sources. Run one backend instance with the current job executor/recovery model.
+```powershell
+docker compose --env-file .local/reviewer.env -p reconflow-reviewer exec -T database createdb -U reconflow reconflow_test
+# If it already exists, preserve it and continue; use only this dedicated test database.
+foreach ($line in Get-Content .local/reviewer.env) {
+  if ($line -match '^DATABASE_PASSWORD=(.*)$') { $env:TEST_DATABASE_PASSWORD=$matches[1] }
+}
+$env:TEST_DATABASE_URL='jdbc:postgresql://database:5432/reconflow_test'
+$env:MAVEN_OPTS='-Xms32m -Xmx256m -XX:ActiveProcessorCount=2'
+$backendPath=Join-Path $PWD 'backend'
+docker run --rm --memory 1g --cpus 2 --network reconflow-reviewer_default --mount "type=bind,source=$backendPath,target=/workspace" -w /workspace -e TEST_DATABASE_URL -e TEST_DATABASE_PASSWORD -e MAVEN_OPTS maven:3.9-eclipse-temurin-17 mvn -B package
+```
 
-There is no automatic hosting, Git push or external claim submission. See the technical design for remaining production work and the validation report for checks actually executed.
+Integration tests exercise authentication/CSRF and role restrictions, preview binding, uploads/duplicates/splits, financial boundaries/taxes/refunds, rate dates, claims/evidence/dashboard and approved matching against real PostgreSQL. AI wire tests use a local fake HTTP provider to verify transport/validation/failure behavior, not a live account.
+
+## Walkthrough
+
+1. Sign in as finance; inspect overview totals, partner tax summaries and aging.
+2. Import a synthetic order CSV/XLSX with partner Website and type ORDERS. Review headers and map required fields.
+3. Validate the 20-row preview, tick approval and process. Inspect accepted/error counts and row errors.
+4. Import settlement/COD and other reports with their matching types. Distinct transaction IDs permit split payments; repeated IDs/files are rejected.
+5. Open reconciliation, filter/search an order and inspect expected/received, applicable rate version, source rows and active exceptions.
+6. Create a claim, move it to IN_REVIEW with a note, and export evidence JSON. Duplicate active claims are blocked. Nothing is sent to partners.
+7. Sign out and sign in as founder. Inspect rate cards and add a non-overlapping version for a synthetic partner. Finance cannot write rate versions.
+8. With AI unset, Suggest with AI displays an unavailable message; manual mapping still works. Do not describe this fallback as an AI-generated suggestion.
+
+## Performance
+
+```powershell
+$env:DEMO_FINANCE_PASSWORD='Review-Finance-2026!'
+python scripts/benchmark.py --base http://127.0.0.1:16173 --rows 50000 --out .local/benchmark-reviewer.json
+```
+
+Rows means per file: 50,000 orders + 50,000 settlements = 100,000 total. The HTTP benchmark includes parsing, database writes, preview/approval and reconciliation. It excludes generation, human delay and cold startup. Run it separately from builds and browser tests. A fresh Docker run on 10 November 2026 took 22.443 seconds for 100,000 total rows (13.497 + 8.946 per file), accepting all rows. The retained 4 November run took 25.952 seconds for the same shape; the 200,000-total-row stress run took 80.079 seconds. No new timing is implied by the historical measurements.
+
+## Actual validation and limitations
+
+Verification rerun on 10 November 2026 (IST): backend Maven test passed 32 tests, 0 failures/errors/skips, including 11 real PostgreSQL 16.15 integration tests, in 24.588 seconds with Java 17.0.21. A run without TEST_DATABASE_URL skipped exactly those 11 tests. Frontend TypeScript/Vite production build passed (38 modules; JavaScript 184.82 kB, gzip 57.44 kB; CSS 7.02 kB). Docker Compose configuration validation, image rebuild and isolated stack startup passed; PostgreSQL, backend and frontend all healthy and /api/health UP. All three production browser workflows passed on a clean reviewer stack, including both roles, session cookie checks, upload/approval, claims/evidence download, mobile rate editing and manual matching. XLSX HTTP scenario verification passed across five report types: 40 orders, five deliberate rejected rows, six statuses and INR 5,992 risk. A fresh 100,000-total-row Docker benchmark passed in 22.443 seconds.
+
+The current source uses the production OpenAI Responses endpoint. On 10 November a direct model-metadata request succeeded, but a real Responses request and the in-app Suggest with AI call returned HTTP 429 credit_balance_exhausted. Successful live AI output remains unverified and requires available account credits/model access. No key is included here. The reviewer instance intentionally exercises manual fallback; the unavailable message is the expected current behavior without credits.
+
+There is no verified public application deployment. Production TLS, managed identity, multi-instance sessions/jobs, backups, retention/redaction, working-day schedules, item-level returns and courier slabs are not part of this take-home. Large XLSX and concurrent throughput remain unverified. The public source and an anonymous clone were verified; Git history begins with the initial submission commit, so earlier local development history is not represented.
